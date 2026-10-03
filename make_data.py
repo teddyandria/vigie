@@ -10,8 +10,7 @@ def save_data(reference, production):
 
 def batch(production):
     Path("data/batches/").mkdir(parents=True, exist_ok=True)
-
-    #boucle de 8 tours
+    
     rng = np.random.default_rng(seed=42)
     for i in range(1, 9):
         parcelle = production.sample(n=250, random_state=rng, replace=True)
