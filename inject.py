@@ -1,6 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
+import json
 
 def day_03(df) -> DataFrame:
     #multiplier credit_amount par 100
@@ -27,16 +28,15 @@ def day_06(df) -> DataFrame:
     #day_06, vraie dérive : les clients ont huit ans de plus, et leur ancienneté d'emploi augmente avec ;
     employment_mapping = {
         "unemployed": "unemployed",
-        "<1": "8<=X<9",
-        "1<=X<4": "9<=X<12",
-        "4<=X<7": "12<=X<15",
-        ">=7": ">=15"}
+        "<1": ">=7",
+        "1<=X<4": ">=7",
+        "4<=X<7": ">=7"}
 
     df["employment"] = df["employment"].map(employment_mapping)
     df["age"] = df["age"] + 8
 
     print(df["employment"].value_counts())
-    print(df["employment"].isna().sum())
+
     return df
 
 def day_07(df, rng_panne) -> DataFrame:
@@ -45,14 +45,55 @@ def day_07(df, rng_panne) -> DataFrame:
     df.loc[frac.index, "num_dependents"] = 2
     return df
 
+def save_incidents() -> dict:
+
+    incidents = {
+        "day_03": {
+            "cause": "bug_unite",
+            "variables": ["credit_amount"],
+            "action": "corriger_pipeline"
+        },
+        "day_04": {
+            "cause": "donnees_manquantes",
+            "variables": ["duration"],
+            "action": "corriger_pipeline"
+        },
+        "day_05": {
+            "cause": "modalite_inconnue",
+            "variables": ["purpose"],
+            "action": "corriger_pipeline"
+        },
+        "day_06": {
+            "cause": "derive_population",
+            "variables": ["age", "employment"],
+            "action": "reentrainer_model"
+        },
+        "day_07": {
+            "cause": "fausse_alerte",
+            "variables": ["num_dependents"],
+            "action": "ignorer"
+        }
+    }
+
+    #on sauvegarde les incidents dans un fichier JSON
+    with open("data/incidents.json", "w") as f:
+        json.dump(incidents, f, indent=4)
+
+    return incidents
+
 def main():
 
     production = pd.read_csv("data/production.csv")
+
+    #générateur de nombres aléatoires
     rng = np.random.default_rng(seed=42)
     rng_panne = np.random.default_rng(seed=43)
+
     for i in range(1, 9):
         parcelle = production.sample(n=250, random_state=rng, replace=True)
         day = f"day_{i:02d}"
+
+        #on reset l'index pour éviter les doublons d'index dans les fichiers batchs
         parcelle = parcelle.reset_index(drop=True)
 
         #print(parcelle.index.duplicated().sum())
@@ -76,4 +117,5 @@ def main():
             parcelle = day_07(parcelle, rng_panne)
             parcelle.to_csv("data/batches/day_07.csv", index= False)
 
+    save_incidents()
 main()
