@@ -7,6 +7,8 @@
 # un bac = plage de valeurs, exemple sur age : 18-25, 26-35 etc...
 
 # formule : (cur − ref) × ln(cur / ref).  -----> ln = np.log
+#nous calculons dans ce fichier le psi d'une colonne, puis de toutes les colonnes d'un lot, puis de tous les lots par rapport à la référence.
+
 
 import numpy as np
 import pandas as pd
