@@ -46,7 +46,9 @@ def day_07(df, rng_panne) -> DataFrame:
     return df
 
 def save_incidents() -> dict:
-
+#tips pour déterminer les actions : 
+# si la cause est un bug ou des données manquantes, il faut corriger le pipeline de production
+# si la cause est une dérive de population, il faut réentrainer le modèle
     incidents = {
         "day_03": {
             "cause": "bug_unite",
