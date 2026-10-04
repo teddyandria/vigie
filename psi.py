@@ -120,6 +120,7 @@ def construire_bacs(reference: DataFrame) -> dict:
     """Prépare, pour chaque colonne, ses bacs et ses proportions de référence.
 
     On l'appelle UNE fois. Le résultat sert ensuite pour tous les lots.
+    exemple de retour : {"age": {"type": "numerique", "frontieres": [...], "ref": [...]}, ...}
     """
     bacs = {}
     for nom in reference.columns:

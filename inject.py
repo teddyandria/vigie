@@ -78,7 +78,7 @@ def save_incidents() -> dict:
     }
 
     #on sauvegarde les incidents dans un fichier JSON
-    with open("data/incidents.json", "w") as f:
+    with open("data/incidents.json", "w", encoding="utf-8") as f:
         json.dump(incidents, f, indent=4)
 
     return incidents
