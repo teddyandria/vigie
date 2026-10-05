@@ -75,7 +75,7 @@ def compare_mean_median(day: str, variable: str) -> dict:
     
     Args:
         day: nom du lot, au format "day_03".
-        variable: nom d'une variable numérique, par exemple "credit_amount" ou "age". Pour une variable texte, utiliser l'outil des modalités inconnues.
+        variable: nom d'une variable numérique, par exemple "credit_amount" ou "age". Pour une variable texte, utiliser l'outil : never_seen_modality.
     """
 
     #charger
@@ -161,9 +161,69 @@ def missing_data_rate(day: str) -> dict:
         "taux": taux,
     }
 
+@tool
+def never_seen_modality(day: str) -> dict:
+    """Cherche, dans les variables texte du lot, les valeurs qui n'existent pas dans la référence.
+
+    À utiliser quand une variable texte (par exemple "purpose") a un PSI élevé, pour savoir si c'est parce qu'une valeur inconnue est apparue.
+    Le modèle n'a jamais appris ces valeurs : il prédit à l'aveugle pour les clients concernés. Une valeur inconnue qui touche beaucoup de lignes d'un coup indique en général un problème technique (nouveau choix dans l'application, faute de frappe, encodage changé), pas un
+    vrai changement chez les clients.
+
+    Ne renvoie que les variables qui ont au moins une valeur inconnue, avec le nombre de lignes par valeur et la part du lot touchée (0.3 = 30 %).
+    Si "modalites_inconnues" est vide, toutes les valeurs sont connues.
+    Les cases vides ne sont pas comptées : voir missing_data_rate.
+
+    Args:
+        day: nom du lot, au format "day_03".
+    """
+
+    #charger
+    reference, _ = _load_data()
+    lot = _load_lot(day)
+
+    #verif
+    if lot is None:
+        return {"erreur": f"jour inconnu : {day}, format attendu : day_01 à day_08"}
+
+    result = {}
+    for col in reference.columns:
+        # On ne regarde que les colonnes texte : on teste la colonne
+        # elle-même (reference[col]), pas son nom.
+        if not pd.api.types.is_string_dtype(reference[col]):
+            continue
+
+        values_ref = reference[col]
+        values_lot = lot[col].dropna()  # une case vide n'est pas une valeur inconnue
+
+        # Le masque : pour chaque ligne du lot, True si la valeur est INCONNUE.
+        masque_inconnues = ~values_lot.isin(values_ref)
+
+        # On applique le masque : il ne reste que les lignes inconnues.
+        inconnues = values_lot[masque_inconnues]
+
+        # Aucune ligne inconnue dans cette colonne : on passe à la suivante.
+        if inconnues.empty:
+            continue
+
+        # value_counts compte chaque valeur inconnue ; on le transforme
+        # en vrai dictionnaire Python, avec des int au lieu de nombres numpy.
+        comptes = {valeur: int(n) for valeur, n in inconnues.value_counts().items()}
+
+        result[col] = {
+            "valeurs": comptes,
+            "part_du_lot": round(len(inconnues) / len(lot), 3),
+        }
+
+    return {
+        "jour": day,
+        "modalites_inconnues": result,
+    }
+
 def main():
     print(missing_data_rate.invoke({"day": "day_04"}))
     print(missing_data_rate.invoke({"day": "day_08"}))
+    print(never_seen_modality.invoke({"day": "day_05"}))
+    print(never_seen_modality.invoke({"day": "day_01"}))
 
 if __name__ == "__main__":
     main()

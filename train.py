@@ -77,7 +77,7 @@ def main():
 
     importances = {
         nom: round(float(valeur), 4)
-        for nom, valeur in zip(X.columns, resultat.importances_mean)
+        for nom, valeur in zip(X.columns, resultat.importances_mean) # type: ignore
     }
     # De la plus importante à la moins importante.
     importances = dict(sorted(importances.items(), key=lambda kv: kv[1], reverse=True))
