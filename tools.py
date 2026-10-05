@@ -9,7 +9,6 @@
 #langchain permet de transformer une fonction Python en outil qu'un LLM peut appeler. langchain lit 3 choses : son nom, ses paramètres et leurs types, docstring.
 
 from langchain_core.tools import tool
-from numpy import number
 from psi import psi_lot, construire_bacs
 import pandas as pd
 from functools import lru_cache
@@ -32,6 +31,7 @@ def _load_lot(day):
     if lot_exist:   
         lot = pd.read_csv(path_location)
         return lot
+    
     return None
 
 
@@ -122,3 +122,48 @@ def compare_mean_median(day: str, variable: str) -> dict:
             "mediane" : rapport_median,
         }
     }
+
+@tool
+def missing_data_rate(day: str) -> dict:
+    """Calcule le taux de valeurs manquantes de chaque variable du lot, comparé à la référence.
+
+    À utiliser quand une variable a un PSI élevé mais que sa moyenne et sa médiane ont peu bougé : le changement vient peut-être de cases vides.
+
+    Ne renvoie que les variables qui ont au moins une valeur manquante dans le lot. Un taux de 0.4 signifie 40 % de cases vides. La référence n'a normalement aucune valeur manquante : un taux élevé et soudain indique en général un problème de collecte ou de pipeline, pas un vrai changement chez les clients. Si "taux" est vide, le lot est complet.
+
+    Args:
+        day: nom du lot, au format "day_03".
+    """
+    reference, _ = _load_data()
+    lot = _load_lot(day)
+
+    if lot is None:
+        return {"erreur": f"jour inconnu : {day}, format attendu : day_01 à day_08"}
+
+    # isna() marque chaque case vide par True, mean() fait la moyenne par
+    # colonne : on obtient la part de cases vides de chaque variable.
+    taux_lot = lot.isna().mean()
+    taux_ref = reference.isna().mean()
+
+    # On parcourt les variables une par une et on ne garde que celles
+    # qui ont au moins une case vide (taux > 0) dans le lot.
+    taux = {
+        variable: {
+            "lot": round(float(t), 3),
+            "reference": round(float(taux_ref.get(variable, 0.0)), 3),
+        }
+        for variable, t in taux_lot.items()
+        if t > 0
+    }
+
+    return {
+        "jour": day,
+        "taux": taux,
+    }
+
+def main():
+    print(missing_data_rate.invoke({"day": "day_04"}))
+    print(missing_data_rate.invoke({"day": "day_08"}))
+
+if __name__ == "__main__":
+    main()
