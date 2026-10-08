@@ -1,4 +1,3 @@
-#ecrire cinq outils qui prennent un jour, et parfois une variable et renvoie un dictionnaire.
 #écris cinq outils qui prennent un jour, et parfois une variable, et renvoient un petit dictionnaire :
 # • le PSI de chaque variable ;
 # • la moyenne et la médiane d'une variable, référence contre lot ;
@@ -316,3 +315,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+TOOLS = [compute_psi, compare_mean_median, missing_data_rate, never_seen_modality, feature_importance, get_runbook]

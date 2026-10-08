@@ -65,15 +65,24 @@ Terminer l'enquête par :
 
 - **cause** : un des cinq mots-clés ci-dessus, écrit à l'identique ;
 - **variables** : la liste des variables en cause ;
+- **gravite** : `critique`, `majeure` ou `mineure`, selon le tableau ci-dessous ;
 - **action** : `corriger_pipeline`, `reentrainer_model` ou `ignorer` ;
-- **justification** : les chiffres des outils qui ont permis de trancher.
+- **preuves** : les observations qui ont permis de trancher, une par ligne, avec l'outil utilisé et son chiffre.
+
+## Gravité
+
+La gravité répond à une question : **les prédictions du modèle sont-elles encore fiables aujourd'hui ?**
+
+- `critique` : non. Le modèle prédit sur des données fausses ou incomplètes. Agir dans la journée.
+- `majeure` : oui pour l'instant, mais le modèle vieillit. Planifier un réentraînement.
+- `mineure` : oui. Le modèle n'est pas affecté. Noter l'événement.
 
 ## Récapitulatif
 
-| Cause | Signe décisif | Outil | Action |
-|---|---|---|---|
-| `bug_unite` | rapport ≈ puissance de 10 | `compare_mean_median` | `corriger_pipeline` |
-| `donnees_manquantes` | taux de manquants > 0, référence à 0 | `missing_data_rate` | `corriger_pipeline` |
-| `modalite_inconnue` | valeur jamais vue | `never_seen_modality` | `corriger_pipeline` |
-| `derive_population` | changement plausible sur variable importante | `feature_importance` | `reentrainer_model` |
-| `fausse_alerte` | changement plausible sur variable peu importante | `feature_importance` | `ignorer` |
+| Cause | Signe décisif | Outil | Gravité | Action |
+|---|---|---|---|---|
+| `bug_unite` | rapport ≈ puissance de 10 | `compare_mean_median` | `critique` | `corriger_pipeline` |
+| `donnees_manquantes` | taux de manquants > 0, référence à 0 | `missing_data_rate` | `critique` | `corriger_pipeline` |
+| `modalite_inconnue` | valeur jamais vue | `never_seen_modality` | `critique` | `corriger_pipeline` |
+| `derive_population` | changement plausible sur variable importante | `feature_importance` | `majeure` | `reentrainer_model` |
+| `fausse_alerte` | changement plausible sur variable peu importante | `feature_importance` | `mineure` | `ignorer` |
