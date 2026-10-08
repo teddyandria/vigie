@@ -8,6 +8,7 @@
 
 #langchain permet de transformer une fonction Python en outil qu'un LLM peut appeler. langchain lit 3 choses : son nom, ses paramètres et leurs types, docstring.
 
+import json
 from langchain_core.tools import tool
 from psi import psi_lot, construire_bacs
 import pandas as pd
@@ -219,7 +220,95 @@ def never_seen_modality(day: str) -> dict:
         "modalites_inconnues": result,
     }
 
+@lru_cache
+def _load_importances():
+    #importances calculées par train.py ; None si le fichier n'existe pas encore
+    path_location = Path("data/importances.json")
+    if not path_location.exists():
+        return None
+    with open(path_location, encoding="utf-8") as f:
+        return json.load(f)
+
+@tool
+def feature_importance(variable: str) -> dict:
+    """Indique à quel point le modèle s'appuie sur une variable pour prédire.
+
+    À utiliser après avoir trouvé une variable qui a beaucoup changé, pour
+    juger si ce changement peut dégrader les prédictions. Une variable qui
+    dérive mais compte peu pour le modèle est souvent une fausse alerte.
+    Attention : une faible importance ne rend pas acceptable un problème
+    technique (unité fausse, valeurs manquantes, modalité inconnue), qu'il
+    faut corriger dans tous les cas.
+
+    Renvoie :
+    - importance : perte de qualité du modèle (AUC) quand on brouille la
+      variable. 0 ou négatif = la variable ne sert pas.
+    - rang : 1 = la variable la plus importante du modèle.
+    - part : part de l'importance totale du modèle (0.5 = 50 %).
+    - niveau : "forte" (part >= 10 %), "moyenne" (>= 3 %) ou "faible".
+
+    Args:
+        variable: nom d'une variable du modèle, par exemple "credit_amount".
+    """
+    importances = _load_importances()
+
+    if importances is None:
+        return {"erreur": "importances introuvables : lancer d'abord python train.py"}
+
+    if variable not in importances:
+        return {"erreur": f"variable inconnue : {variable}. Variables disponibles : {list(importances)}"}
+
+    # Les importances négatives sont du bruit : on les compte comme 0.
+    positives = {nom: max(valeur, 0.0) for nom, valeur in importances.items()}
+    total = sum(positives.values())
+
+    # importances.json est déjà trié de la plus importante à la moins importante,
+    # donc la position dans la liste donne le rang.
+    rang = list(importances).index(variable) + 1
+    part = positives[variable] / total if total > 0 else 0.0
+
+    if part >= 0.10:
+        niveau = "forte"
+    elif part >= 0.03:
+        niveau = "moyenne"
+    else:
+        niveau = "faible"
+
+    return {
+        "variable": variable,
+        "importance": round(float(importances[variable]), 4),
+        "rang": rang,
+        "nb_variables": len(importances),
+        "part": round(part, 3),
+        "niveau": niveau,
+    }
+
+@tool
+def get_runbook()-> dict:
+    """Renvoie la procédure d'astreinte de l'équipe (RUNBOOK.md) pour enquêter sur une alerte de dérive.
+
+    À appeler en premier, au début de chaque enquête, avant tout autre outil.
+    Le runbook indique dans quel ordre utiliser les outils, comment
+    reconnaître chacune des cinq causes possibles (bug_unite,
+    donnees_manquantes, modalite_inconnue, derive_population,
+    fausse_alerte) et quelle action recommander (corriger_pipeline,
+    reentrainer_model, ignorer). Suivre cette procédure plutôt
+    qu'improviser, et reprendre ses mots-clés à l'identique dans la
+    conclusion.
+    """
+    path_location = Path("RUNBOOK.md")
+    if not path_location.exists():
+        return {"erreur": f"Le fichier : {path_location} n'existe pas."}
+    
+    texte = path_location.read_text(encoding="utf-8")
+
+    return {"runbook": texte}
+
+
 def main():
+    print(feature_importance.invoke({"variable": "checking_status"}))
+    print(feature_importance.invoke({"variable": "num_dependents"}))
+    print(feature_importance.invoke({"variable": "montant"}))
     print(missing_data_rate.invoke({"day": "day_04"}))
     print(missing_data_rate.invoke({"day": "day_08"}))
     print(never_seen_modality.invoke({"day": "day_05"}))
