@@ -1,4 +1,4 @@
-#écris cinq outils qui prennent un jour, et parfois une variable, et renvoient un petit dictionnaire :
+#écrire cinqs outils qui prennent un jour, et parfois une variable, et renvoient un petit dictionnaire :
 # • le PSI de chaque variable ;
 # • la moyenne et la médiane d'une variable, référence contre lot ;
 # • le taux de valeurs manquantes par variable ;
