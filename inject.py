@@ -30,7 +30,8 @@ def day_06(df) -> DataFrame:
         "unemployed": "unemployed",
         "<1": ">=7",
         "1<=X<4": ">=7",
-        "4<=X<7": ">=7"}
+        "4<=X<7": ">=7",
+        ">=7": ">=7"}
 
     df["employment"] = df["employment"].map(employment_mapping)
     df["age"] = df["age"] + 8

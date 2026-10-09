@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 
+
 load_dotenv()  # charge les variables d'environnement depuis le fichier .env
+
 
 class Diagnostic(BaseModel):
     cause: Literal["bug_unite", "donnees_manquantes", "modalite_inconnue", "derive_population", "fausse_alerte"] = Field(..., description="bug_unite : un bug dans l'unité de mesure a provoqué la dérive, donnees_manquantes : des données sont manquantes dans le lot, modalite_inconnue : une modalité inconnue est apparue dans le lot, derive_population : la population a changé et le modèle n'est plus adapté, fausse_alerte : le PSI est supérieur à 0,25, la derive est réelle mais n'a pas d'impact sur le modèle")
@@ -44,7 +46,7 @@ graph = create_agent(
     model="openai:gpt-5.5",
     tools=TOOLS,
     response_format=Diagnostic,
-    system_prompt=SYSTEM_PROMPT,
+    system_prompt=SYSTEM_PROMPT
 )
 
 if __name__ == "__main__":

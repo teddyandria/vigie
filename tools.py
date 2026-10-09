@@ -305,13 +305,13 @@ def get_runbook()-> dict:
 
 
 def main():
-    print(feature_importance.invoke({"variable": "checking_status"}))
-    print(feature_importance.invoke({"variable": "num_dependents"}))
-    print(feature_importance.invoke({"variable": "montant"}))
-    print(missing_data_rate.invoke({"day": "day_04"}))
-    print(missing_data_rate.invoke({"day": "day_08"}))
-    print(never_seen_modality.invoke({"day": "day_05"}))
-    print(never_seen_modality.invoke({"day": "day_01"}))
+    # print(feature_importance.invoke({"variable": "checking_status"}))
+    # print(feature_importance.invoke({"variable": "num_dependents"}))
+    # print(feature_importance.invoke({"variable": "montant"}))
+    print(missing_data_rate.invoke({"day": "day_06"}))
+    # print(missing_data_rate.invoke({"day": "day_08"}))
+    # print(never_seen_modality.invoke({"day": "day_05"}))
+    # print(never_seen_modality.invoke({"day": "day_01"}))
 
 if __name__ == "__main__":
     main()
