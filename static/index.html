@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vigie</title>
+<style>
+/* Thème clair unique : fond blanc cassé, panneaux blancs, couleur réservée aux états et aux actions. */
+:root {
+  color-scheme: light;
+  --bg: #f6f6f3; --surface: #ffffff; --ink: #1c1c1c; --text: #2b2b2b; --muted: #5f5f5f; --line: #e0dfda; --zebra: #fafaf8;
+  --select: #fff4cc; --select-line: #e0b520; --track: #eeede8; --bar: #8f9aa3; --hot: #d1432b;
+  --crit: #b8321e; --crit-bg: #fde8e4; --maj: #9a5b00; --maj-bg: #fdefd6; --min: #2f6b2c; --min-bg: #e3f1df;
+  --ok: #2f6b2c; --action: #1c1c1c;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--font-body); padding-inline: 16px; padding-block: 0 3rem; }
+.wrap { max-width: 76rem; margin: 0 auto; display: grid; gap: 1.25rem; }
+h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 650; color: var(--ink); }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+.muted { color: var(--muted); }
+.label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding-block: 1.1rem 0.9rem; border-bottom: 1px solid var(--line); }
+header > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; }
+header h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
+header h1::before { content: ""; display: inline-block; width: 0.6rem; height: 0.6rem; margin-right: 0.5rem; background: var(--hot); border-radius: 50%; vertical-align: 0.15em; }
+header p { margin: 0; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.75rem; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 0.75rem 0.9rem; display: grid; gap: 0.15rem; }
+.kpi b { font-size: 1.6rem; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.main { display: grid; grid-template-columns: minmax(17rem, 21rem) 1fr; gap: 1.25rem; align-items: start; }
+.main > * { min-width: 0; }
+@media (max-width: 52rem) { .main { grid-template-columns: 1fr; } }
+
+.lots { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.lots li + li { border-top: 1px solid var(--line); }
+.lots button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 4px 4.4rem 1fr auto; gap: 0.7rem; align-items: center; padding: 0.65rem 0.8rem 0.65rem 0; }
+.lots button:hover { background: var(--zebra); }
+.lots button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.lots button[aria-current="true"] { background: var(--select); }
+.stripe { align-self: stretch; background: transparent; }
+.stripe.critique { background: var(--crit); } .stripe.majeure { background: var(--maj); } .stripe.mineure { background: var(--min); } .stripe.alerte { background: var(--hot); }
+.lot-day { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+.lot-cause { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pill { font-size: 0.75rem; font-weight: 600; padding: 0.12rem 0.5rem; border-radius: 4px; white-space: nowrap; }
+.pill.critique { color: var(--crit); background: var(--crit-bg); }
+.pill.majeure { color: var(--maj); background: var(--maj-bg); }
+.pill.mineure { color: var(--min); background: var(--min-bg); }
+.pill.sain { color: var(--muted); background: var(--track); }
+.pill.alerte { color: var(--hot); background: var(--crit-bg); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1.25rem; display: grid; gap: 1.25rem; }
+.detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.detail-head h2 { font-size: 1.4rem; font-family: var(--font-mono); }
+
+.psi { display: grid; gap: 0.35rem; }
+.psi-row { display: grid; grid-template-columns: 10.5rem 1fr 3.6rem; gap: 0.75rem; align-items: center; font-size: 0.88rem; }
+.psi-row .name { font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
+.psi-row .val { text-align: right; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 0.8rem; background: var(--track); border-radius: 3px; }
+.fill { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 3px; }
+.psi-row.over .fill { background: var(--hot); }
+.psi-row.over .name, .psi-row.over .val { color: var(--hot); font-weight: 600; }
+.seuil { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 2px dashed var(--ink); }
+
+.diag { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem; }
+.diag div { display: grid; gap: 0.2rem; background: var(--zebra); border: 1px solid var(--line); border-radius: 4px; padding: 0.6rem 0.75rem; }
+.diag .v { font-family: var(--font-mono); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+ul.preuves { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+.outils { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; font-family: var(--font-mono); font-size: 0.82rem; }
+.outils span { background: var(--track); padding: 0.1rem 0.45rem; border-radius: 3px; }
+.outils i { color: var(--muted); font-style: normal; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta a { color: var(--crit); font-weight: 600; }
+
+.btn { font: 600 0.9rem var(--font-body); color: #ffffff; background: var(--action); border: 0; border-radius: 4px; padding: 0.55rem 1rem; cursor: pointer; }
+.btn:hover { background: #3a3a3a; }
+.btn:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+.btn[disabled] { background: var(--bar); cursor: progress; }
+.note { font-size: 0.85rem; color: var(--muted); }
+.error { color: var(--crit); font-weight: 600; margin: 0; }
+.error:empty { display: none; }
+
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--zebra); }
+tr:last-child td { border-bottom: 0; }
+td.mono { font-family: var(--font-mono); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.yes { color: var(--ok); font-weight: 600; } .no { color: var(--crit); font-weight: 600; }
+section { display: grid; gap: 0.6rem; }
+section > h2 { font-size: 1.15rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Vigie</h1>
+    </div>
+    <p class="note">Seuil d'alerte : PSI &gt; 0,25</p>
+  </header>
+
+  <div class="kpis" id="kpis" aria-live="polite"></div>
+
+  <div class="main">
+    <nav aria-label="Lots quotidiens">
+      <p class="label" style="margin:0 0 0.5rem">Lots quotidiens</p>
+      <ul class="lots" id="lots"></ul>
+    </nav>
+    <main class="card" id="detail"><p class="muted">Chargement…</p></main>
+  </div>
+
+  <section>
+    <h2>Dernière évaluation</h2>
+    <p class="note" id="eval-note"></p>
+    <div class="table-wrap" id="eval"></div>
+  </section>
+</div>
+
+<script>
+const SEUIL = 0.25;
+const etat = { lots: [], selection: null };
+const nombre = (v, d = 2) => v == null ? "n/d" : new Intl.NumberFormat("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
+
+function el(tag, attrs = {}, ...enfants) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v);
+  }
+  for (const e of enfants) if (e != null) n.append(e);
+  return n;
+}
+
+function statut(lot) {
+  if (lot.diagnostic) return lot.diagnostic.gravite;
+  return lot.alerte ? "alerte" : "sain";
+}
+
+async function api(chemin, options) {
+  const r = await fetch(chemin, options);
+  const corps = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(corps.detail || `Erreur ${r.status}`);
+  return corps;
+}
+
+function afficherKpis(evaluation) {
+  const alertes = etat.lots.filter(l => l.alerte);
+  const diagnostiques = alertes.filter(l => l.diagnostic);
+  const critiques = etat.lots.filter(l => l.diagnostic?.gravite === "critique").length;
+  const couts = diagnostiques.map(l => l.diagnostic.cout_usd).filter(c => c != null);
+  const coutMoyen = couts.length ? couts.reduce((a, b) => a + b, 0) / couts.length : null;
+  const s = evaluation?.scores;
+  const tuiles = [
+    ["Lots surveillés", etat.lots.length],
+    ["Alertes", alertes.length],
+    ["Critiques", critiques],
+    ["Diagnostiqués", `${diagnostiques.length} / ${alertes.length}`],
+    ["Bonne cause (éval.)", s ? `${s.cause_ok} / ${s.nb_enquetes}` : "n/d"],
+    ["Coût moyen", coutMoyen == null ? "n/d" : `${nombre(coutMoyen, 3)} $`],
+  ];
+  document.getElementById("kpis").replaceChildren(
+    ...tuiles.map(([t, v]) => el("div", { class: "kpi" }, el("span", { class: "label", text: t }), el("b", { text: String(v) })))
+  );
+}
+
+function afficherLots() {
+  const liste = document.getElementById("lots");
+  liste.replaceChildren(...etat.lots.map(lot => {
+    const s = statut(lot);
+    const texte = lot.diagnostic ? lot.diagnostic.cause : lot.alerte ? "en attente d'enquête" : "aucune alerte";
+    const bouton = el("button", { type: "button", "aria-current": String(lot.jour === etat.selection) },
+      el("span", { class: `stripe ${s}` }),
+      el("span", { class: "lot-day", text: lot.jour }),
+      el("span", { class: "lot-cause muted", text: texte }),
+      el("span", { class: `pill ${s}`, text: s }),
+    );
+    bouton.addEventListener("click", () => selectionner(lot.jour));
+    return el("li", {}, bouton);
+  }));
+}
+
+function graphiquePsi(psi) {
+  const lignes = Object.entries(psi).slice(0, 8);
+  const max = Math.max(SEUIL * 2, ...lignes.map(([, v]) => v));
+  const pos = v => `${Math.min(v / max, 1) * 100}%`;
+  return el("div", { class: "psi", role: "img", "aria-label": "PSI des 8 variables qui ont le plus bougé" },
+    ...lignes.map(([nom, v]) => el("div", { class: `psi-row${v > SEUIL ? " over" : ""}` },
+      el("span", { class: "name", text: nom }),
+      el("span", { class: "track" }, el("span", { class: "fill", style: `width:${pos(v)}` }), el("span", { class: "seuil", style: `left:${pos(SEUIL)}`, title: "seuil 0,25" })),
+      el("span", { class: "val", text: nombre(v) }),
+    )),
+    el("p", { class: "note", style: "margin:0.3rem 0 0", text: `Trait pointillé : seuil d'alerte à 0,25. Échelle de 0 à ${nombre(max)}.` }),
+  );
+}
+
+function blocDiagnostic(d) {
+  const lien = d.trace_url ? el("a", { href: d.trace_url, target: "_blank", rel: "noopener", text: "Voir la trace Langfuse" }) : null;
+  const source = d.source === "eval" ? "issu de la dernière évaluation" : `lancé le ${d.date?.replace("T", " à ")}`;
+  return el("div", { style: "display:grid;gap:1rem" },
+    el("div", { class: "diag" },
+      ...[["Cause", d.cause], ["Variables", d.variables.join(", ")], ["Gravité", d.gravite], ["Action", d.action]]
+        .map(([t, v]) => el("div", {}, el("span", { class: "label", text: t }), el("span", { class: "v", text: v }))),
+    ),
+    el("div", {}, el("p", { class: "label", style: "margin:0 0 0.4rem", text: "Preuves" }),
+      el("ul", { class: "preuves" }, ...d.preuves.map(p => el("li", { text: p })))),
+    d.outils ? el("div", {}, el("p", { class: "label", style: "margin:0 0 0.4rem", text: "Outils appelés" }),
+      el("div", { class: "outils" }, ...d.outils.flatMap((o, i) => i ? [el("i", { text: "→" }), el("span", { text: o })] : [el("span", { text: o })]))) : null,
+    el("div", { class: "meta" },
+      el("span", { text: `${d.appels_outils} appels d'outils` }),
+      el("span", { text: `${nombre(d.duree_s, 1)} s` }),
+      el("span", { text: d.cout_usd == null ? "coût n/d" : `${nombre(d.cout_usd, 3)} $` }),
+      el("span", { text: source }),
+      lien,
+    ),
+  );
+}
+
+async function selectionner(jour) {
+  etat.selection = jour;
+  try { history.replaceState(null, "", `#${jour}`); } catch {}
+  afficherLots();
+  const zone = document.getElementById("detail");
+  zone.replaceChildren(el("p", { class: "muted", text: `Chargement de ${jour}…` }));
+  try {
+    const lot = await api(`/api/lots/${jour}`);
+    const s = lot.diagnostic ? lot.diagnostic.gravite : lot.alerte ? "alerte" : "sain";
+    const tete = el("div", { class: "detail-head" }, el("h2", { text: lot.jour }), el("span", { class: `pill ${s}`, text: s }));
+
+    let corps;
+    if (!lot.alerte) {
+      corps = el("p", { class: "muted", text: "Aucune variable ne dépasse le seuil : pas d'enquête, pas d'appel au LLM." });
+    } else {
+      const erreur = el("p", { class: "error", role: "alert" });
+      const bouton = el("button", { class: "btn", type: "button", text: lot.diagnostic ? "Relancer l'enquête" : "Lancer l'enquête" });
+      bouton.addEventListener("click", async () => {
+        bouton.disabled = true;
+        bouton.textContent = "Enquête en cours… (10 à 30 s)";
+        erreur.textContent = "";
+        try {
+          await api(`/api/lots/${jour}/enquete`, { method: "POST" });
+          await charger(jour);
+        } catch (e) {
+          erreur.textContent = e.message;
+          bouton.disabled = false;
+          bouton.textContent = "Réessayer";
+        }
+      });
+      const variables = Object.entries(lot.alerte).map(([v, p]) => `${v} (${nombre(p)})`).join(", ");
+      corps = el("div", { style: "display:grid;gap:1rem" },
+        el("p", {}, el("span", { class: "label", text: "Alerte · " }), variables),
+        lot.diagnostic ? blocDiagnostic(lot.diagnostic) : el("p", { class: "muted", text: "Aucun diagnostic pour ce lot." }),
+        el("div", { style: "display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center" }, bouton,
+          el("span", { class: "note", text: "Appelle le LLM : environ 0,1 $ par enquête." })),
+        erreur,
+      );
+    }
+    zone.replaceChildren(tete, corps,
+      el("div", {}, el("p", { class: "label", style: "margin:0 0 0.5rem", text: "PSI par variable" }), graphiquePsi(lot.psi)));
+  } catch (e) {
+    zone.replaceChildren(el("p", { class: "error", text: e.message }));
+  }
+}
+
+function afficherEval(evaluation) {
+  const note = document.getElementById("eval-note");
+  const zone = document.getElementById("eval");
+  if (!evaluation) {
+    note.textContent = "Aucune évaluation enregistrée : lancer python eval.py.";
+    zone.replaceChildren();
+    return;
+  }
+  const s = evaluation.scores;
+  note.textContent = `Session ${evaluation.session} · bonne cause ${s.cause_ok}/${s.nb_enquetes} · bonnes variables ${s.variables_ok}/${s.nb_enquetes} · bonne action ${s.action_ok}/${s.nb_enquetes}`;
+  const ok = v => el("td", { class: v ? "yes" : "no", text: v ? "oui" : "non" });
+  zone.replaceChildren(el("table", {},
+    el("thead", {}, el("tr", {}, ...["Lot", "Attendu", "Obtenu", "Cause", "Variables", "Action", "Outils", "Durée", "Coût"]
+      .map((t, i) => el("th", { class: i > 5 ? "num" : "", text: t })))),
+    el("tbody", {}, ...evaluation.enquetes.map(l => l.erreur
+      ? el("tr", {}, el("td", { class: "mono", text: l.jour }), el("td", { class: "no", colspan: "8", text: `Erreur : ${l.erreur}` }))
+      : el("tr", {},
+        el("td", { class: "mono", text: l.jour }),
+        el("td", { class: "mono", text: l.cause_attendue }),
+        el("td", { class: "mono", text: l.cause_obtenue }),
+        ok(l.cause_ok), ok(l.variables_ok), ok(l.action_ok),
+        el("td", { class: "num", text: l.appels_outils }),
+        el("td", { class: "num", text: `${nombre(l.duree_s, 1)} s` }),
+        el("td", { class: "num", text: l.cout_usd == null ? "n/d" : `${nombre(l.cout_usd, 3)} $` }),
+      ))),
+  ));
+}
+
+async function charger(jour) {
+  const [lots, evaluation] = await Promise.all([api("/api/lots"), api("/api/eval").catch(() => null)]);
+  etat.lots = lots;
+  afficherKpis(evaluation);
+  afficherEval(evaluation);
+  const demande = jour || location.hash.slice(1);
+  const defaut = lots.find(l => l.alerte)?.jour || lots[0]?.jour;
+  await selectionner(lots.some(l => l.jour === demande) ? demande : defaut);
+}
+
+charger().catch(e => {
+  document.getElementById("detail").replaceChildren(el("p", { class: "error", text: `API injoignable : ${e.message}. Lancer uvicorn api:app depuis la racine du projet.` }));
+});
+</script>
+</body>
+</html>
