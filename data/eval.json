@@ -1,0 +1,154 @@
+{
+    "session": "eval-20261027-185240",
+    "scores": {
+        "nb_enquetes": 5,
+        "cause_ok": 5,
+        "variables_ok": 5,
+        "action_ok": 5
+    },
+    "enquetes": [
+        {
+            "jour": "day_03",
+            "cause_attendue": "bug_unite",
+            "cause_obtenue": "bug_unite",
+            "cause_ok": true,
+            "variables_attendues": [
+                "credit_amount"
+            ],
+            "variables_obtenues": [
+                "credit_amount"
+            ],
+            "variables_ok": true,
+            "action_attendue": "corriger_pipeline",
+            "action_obtenue": "corriger_pipeline",
+            "action_ok": true,
+            "gravite": "critique",
+            "preuves": [
+                "compute_psi(day_03) : credit_amount est la seule variable au-dessus de 0,25, avec PSI = 8.283.",
+                "missing_data_rate(day_03) : aucun taux de valeurs manquantes dans le lot, taux = {}.",
+                "never_seen_modality(day_03) : aucune modalité inconnue dans le lot, modalites_inconnues = {}.",
+                "compare_mean_median(day_03, credit_amount) : le rapport lot/référence est proche de 100 sur la moyenne, moyenne référence = 3212.505, moyenne lot = 323704.8, rapport moyenne = 100.764.",
+                "compare_mean_median(day_03, credit_amount) : le rapport lot/référence est proche de 100 sur la médiane, médiane référence = 2325.5, médiane lot = 222250.0, rapport médiane = 95.571."
+            ],
+            "duree_s": 17.2,
+            "appels_outils": 5,
+            "tokens_entree": 22448,
+            "tokens_sortie": 453,
+            "cout_usd": 0.1258
+        },
+        {
+            "jour": "day_04",
+            "cause_attendue": "donnees_manquantes",
+            "cause_obtenue": "donnees_manquantes",
+            "cause_ok": true,
+            "variables_attendues": [
+                "duration"
+            ],
+            "variables_obtenues": [
+                "duration"
+            ],
+            "variables_ok": true,
+            "action_attendue": "corriger_pipeline",
+            "action_obtenue": "corriger_pipeline",
+            "action_ok": true,
+            "gravite": "critique",
+            "preuves": [
+                "compute_psi(day_04) : duration a un PSI de 3.586, seul PSI supérieur à 0.25.",
+                "missing_data_rate(day_04) : duration a 0.4 de valeurs manquantes dans le lot contre 0.0 dans la référence."
+            ],
+            "duree_s": 11.5,
+            "appels_outils": 3,
+            "tokens_entree": 13994,
+            "tokens_sortie": 489,
+            "cout_usd": 0.0846
+        },
+        {
+            "jour": "day_05",
+            "cause_attendue": "modalite_inconnue",
+            "cause_obtenue": "modalite_inconnue",
+            "cause_ok": true,
+            "variables_attendues": [
+                "purpose"
+            ],
+            "variables_obtenues": [
+                "purpose"
+            ],
+            "variables_ok": true,
+            "action_attendue": "corriger_pipeline",
+            "action_obtenue": "corriger_pipeline",
+            "action_ok": true,
+            "gravite": "critique",
+            "preuves": [
+                "compute_psi(day_05) : purpose a un PSI de 2.692, seule variable au-dessus de 0.25.",
+                "missing_data_rate(day_05) : taux vide {}, donc pas de valeurs manquantes dans le lot.",
+                "never_seen_modality(day_05) : purpose contient la modalité jamais vue new_value_panne sur 75 lignes, soit 0.3 du lot."
+            ],
+            "duree_s": 11.7,
+            "appels_outils": 4,
+            "tokens_entree": 18173,
+            "tokens_sortie": 271,
+            "cout_usd": 0.099
+        },
+        {
+            "jour": "day_06",
+            "cause_attendue": "derive_population",
+            "cause_obtenue": "derive_population",
+            "cause_ok": true,
+            "variables_attendues": [
+                "age",
+                "employment"
+            ],
+            "variables_obtenues": [
+                "employment",
+                "age"
+            ],
+            "variables_ok": true,
+            "action_attendue": "reentrainer_model",
+            "action_obtenue": "reentrainer_model",
+            "action_ok": true,
+            "gravite": "majeure",
+            "preuves": [
+                "compute_psi(day_06) : PSI employment = 6.019 et PSI age = 2.465, donc les deux variables dépassent 0,25 et doivent être expliquées.",
+                "missing_data_rate(day_06) : taux = {}, donc aucune valeur manquante détectée dans le lot.",
+                "never_seen_modality(day_06) : modalites_inconnues = {}, donc aucune modalité inconnue détectée, notamment pour employment.",
+                "compare_mean_median(day_06, age) : moyenne référence = 35.533, moyenne lot = 43.296, rapport moyenne = 1.218 ; médiane référence = 33.0, médiane lot = 41.0, rapport médiane = 1.242, donc changement plausible et pas bug_unite.",
+                "feature_importance(employment) : part = 0.031, niveau = moyenne, rang = 11.",
+                "feature_importance(age) : part = 0.037, niveau = moyenne, rang = 8."
+            ],
+            "duree_s": 23.6,
+            "appels_outils": 7,
+            "tokens_entree": 26940,
+            "tokens_sortie": 976,
+            "cout_usd": 0.164
+        },
+        {
+            "jour": "day_07",
+            "cause_attendue": "fausse_alerte",
+            "cause_obtenue": "fausse_alerte",
+            "cause_ok": true,
+            "variables_attendues": [
+                "num_dependents"
+            ],
+            "variables_obtenues": [
+                "num_dependents"
+            ],
+            "variables_ok": true,
+            "action_attendue": "ignorer",
+            "action_obtenue": "ignorer",
+            "action_ok": true,
+            "gravite": "mineure",
+            "preuves": [
+                "compute_psi(day_07) : seule variable au-dessus de 0,25 = num_dependents, PSI 1.839.",
+                "missing_data_rate(day_07) : aucun taux de valeurs manquantes retourné (taux = {}).",
+                "never_seen_modality(day_07) : aucune modalité inconnue retournée (modalites_inconnues = {}).",
+                "compare_mean_median(day_07, num_dependents) : rapports lot/référence plausibles, moyenne 1.531 et médiane 2.0, pas proches d’une puissance de 10.",
+                "feature_importance(num_dependents) : niveau faible, importance 0.0016, rang 16/20, part 0.005."
+            ],
+            "duree_s": 16.2,
+            "appels_outils": 6,
+            "tokens_entree": 26894,
+            "tokens_sortie": 651,
+            "cout_usd": 0.154
+        }
+    ]
+}

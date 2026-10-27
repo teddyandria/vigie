@@ -1,0 +1,38 @@
+{
+    "day_03": {
+        "cause": "bug_unite",
+        "variables": [
+            "credit_amount"
+        ],
+        "action": "corriger_pipeline"
+    },
+    "day_04": {
+        "cause": "donnees_manquantes",
+        "variables": [
+            "duration"
+        ],
+        "action": "corriger_pipeline"
+    },
+    "day_05": {
+        "cause": "modalite_inconnue",
+        "variables": [
+            "purpose"
+        ],
+        "action": "corriger_pipeline"
+    },
+    "day_06": {
+        "cause": "derive_population",
+        "variables": [
+            "age",
+            "employment"
+        ],
+        "action": "reentrainer_model"
+    },
+    "day_07": {
+        "cause": "fausse_alerte",
+        "variables": [
+            "num_dependents"
+        ],
+        "action": "ignorer"
+    }
+}

@@ -35,6 +35,13 @@ def _load_lot(day):
     return None
 
 
+def _arrondi(valeur) -> float | None:
+    # float Python à 3 décimales ; None pour une valeur absente (colonne vide, NaN)
+    if valeur is None or pd.isna(valeur):
+        return None
+    return round(float(valeur), 3)
+
+
 @tool
 def compute_psi(day: str) -> dict:
     """Calcule le PSI de chaque variable, référence contre lot.
@@ -103,23 +110,24 @@ def compare_mean_median(day: str, variable: str) -> dict:
     mean_ref = var_from_ref.mean()
     mean_lot = var_from_lot.mean()
 
-    rapport_median = median_lot / median_ref
-    rapport_mean = mean_lot / mean_ref
+    # Pas de rapport si la référence vaut 0 (division impossible).
+    rapport_median = median_lot / median_ref if median_ref else None
+    rapport_mean = mean_lot / mean_ref if mean_ref else None
 
     return {
         "jour": day,
         "variable" : variable,
         "reference" : {
-            "moyenne": mean_ref,
-            "mediane" : median_ref,
+            "moyenne": _arrondi(mean_ref),
+            "mediane" : _arrondi(median_ref),
         },
         "lot": {
-            "moyenne": mean_lot,
-            "mediane" : median_lot,
+            "moyenne": _arrondi(mean_lot),
+            "mediane" : _arrondi(median_lot),
         },
         "rapport": {
-            "moyenne": rapport_mean,
-            "mediane" : rapport_median,
+            "moyenne": _arrondi(rapport_mean),
+            "mediane" : _arrondi(rapport_median),
         }
     }
 

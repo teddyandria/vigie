@@ -1,0 +1,22 @@
+{
+    "checking_status": 0.1448,
+    "credit_history": 0.0238,
+    "duration": 0.0236,
+    "other_payment_plans": 0.0197,
+    "savings_status": 0.0153,
+    "credit_amount": 0.0149,
+    "other_parties": 0.0127,
+    "age": 0.0116,
+    "personal_status": 0.0114,
+    "job": 0.0107,
+    "employment": 0.0098,
+    "foreign_worker": 0.0056,
+    "existing_credits": 0.0043,
+    "purpose": 0.0029,
+    "installment_commitment": 0.0017,
+    "num_dependents": 0.0016,
+    "housing": -0.001,
+    "own_telephone": -0.0029,
+    "residence_since": -0.0036,
+    "property_magnitude": -0.0037
+}
