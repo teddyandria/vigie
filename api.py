@@ -3,24 +3,28 @@
 Lancer depuis la racine du projet (les chemins data/ sont relatifs) :
     uvicorn api:app --reload
 puis ouvrir http://127.0.0.1:8000
+
+Les enquêtes appellent le LLM avec la clé du propriétaire : elles sont désactivées par
+défaut. ENQUETES_ACTIVES=true (dans .env en local) les autorise.
 """
 
 import json
+import os
 import re
 import time
 from datetime import datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from langchain_core.runnables import RunnableConfig
 from langfuse import Langfuse, get_client
 from langfuse.langchain import CallbackHandler
 
-from agent import graph
-from eval import mesurer
-from investigate import construire_message
 from tools import compute_psi
+
+load_dotenv()  # en local : clés et ENQUETES_ACTIVES ; sur Railway, les variables du service
 
 DATA = Path("data")
 DIAGNOSTICS = DATA / "diagnostics"
@@ -35,6 +39,10 @@ def _lire_json(chemin: Path) -> dict:
         return {}
     with open(chemin, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _enquetes_actives() -> bool:
+    return os.getenv("ENQUETES_ACTIVES", "false").lower() in {"1", "true", "oui"}
 
 
 def _jours() -> list[str]:
@@ -76,6 +84,12 @@ def dashboard():
     return FileResponse(DASHBOARD)
 
 
+@app.get("/api/config")
+def configuration() -> dict:
+    """Indique au dashboard si le bouton d'enquête doit être proposé."""
+    return {"enquetes_actives": _enquetes_actives()}
+
+
 @app.get("/api/lots")
 def lister_lots() -> list[dict]:
     """Tous les lots, avec leur alerte et le dernier diagnostic de l'agent."""
@@ -101,10 +115,18 @@ def detail_lot(day: str) -> dict:
 @app.post("/api/lots/{day}/enquete")
 def lancer_enquete(day: str) -> dict:
     """Lance l'agent sur l'alerte du jour. Appel payant au LLM : 10 à 30 secondes."""
+    if not _enquetes_actives():
+        raise HTTPException(403, "Démo en lecture seule : les enquêtes sont désactivées sur ce serveur.")
     _verifier_jour(day)
     alerte = _lire_json(DATA / "alerts.json").get(day)
     if alerte is None:
         raise HTTPException(409, f"Aucune alerte pour {day} : pas d'enquête à lancer.")
+
+    # Import ici : l'agent exige une clé OpenAI dès sa création, et le serveur
+    # doit pouvoir démarrer sans elle en lecture seule.
+    from agent import graph
+    from eval import mesurer
+    from investigate import construire_message
 
     # Un identifiant de trace choisi d'avance permet de renvoyer le lien Langfuse.
     trace_id = Langfuse.create_trace_id()

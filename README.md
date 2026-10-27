@@ -65,6 +65,7 @@ OPENAI_API_KEY=...
 LANGFUSE_PUBLIC_KEY=...
 LANGFUSE_SECRET_KEY=...
 LANGFUSE_BASE_URL=https://cloud.langfuse.com
+ENQUETES_ACTIVES=true   # autorise le bouton « Lancer l'enquête » du dashboard
 ```
 
 Puis, depuis la racine du projet :
@@ -79,6 +80,12 @@ python investigate.py day_07   # une enquête
 python eval.py                 # les 5 enquêtes, comparées à la vérité
 uvicorn api:app --reload       # dashboard sur http://127.0.0.1:8000
 ```
+
+## Déploiement (Railway)
+
+Le dépôt contient les données générées, la configuration (`railway.json`) et la version de Python (`.python-version`). En ligne, le dashboard est en **lecture seule** : il affiche les diagnostics de la dernière évaluation, et la route d'enquête renvoie 403. Aucune clé OpenAI n'est nécessaire pour cette démo.
+
+Pour autoriser les enquêtes en ligne, définir `ENQUETES_ACTIVES=true`, `OPENAI_API_KEY` et les clés Langfuse dans les variables du service. Chaque enquête coûte environ 0,1 $.
 
 ## Structure
 

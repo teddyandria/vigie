@@ -85,6 +85,12 @@ ul.preuves { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; }
 .btn:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
 .btn[disabled] { background: var(--bar); cursor: progress; }
 .note { font-size: 0.85rem; color: var(--muted); }
+.bandeau { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.9rem; align-items: start; background: var(--select); border: 1px solid var(--select-line); border-left-width: 5px; border-radius: 6px; padding: 0.9rem 1.1rem; }
+.bandeau strong { font-size: 1rem; color: var(--ink); }
+.bandeau p { margin: 0; grid-column: 2; }
+.bandeau a { color: var(--ink); font-weight: 600; }
+.bandeau .icone { grid-row: span 2; font-weight: 700; font-size: 0.8rem; color: var(--ink); border: 2px solid var(--ink); border-radius: 50%; width: 1.5rem; height: 1.5rem; display: grid; place-items: center; }
+.lecture-seule { margin: 0; background: var(--select); border: 1px solid var(--select-line); border-radius: 4px; padding: 0.55rem 0.8rem; font-size: 0.88rem; color: var(--ink); }
 .error { color: var(--crit); font-weight: 600; margin: 0; }
 .error:empty { display: none; }
 
@@ -109,6 +115,12 @@ section > h2 { font-size: 1.15rem; }
     <p class="note">Seuil d'alerte : PSI &gt; 0,25</p>
   </header>
 
+  <div class="bandeau" id="bandeau" role="note" hidden>
+    <span class="icone" aria-hidden="true">i</span>
+    <strong>Démo en lecture seule</strong>
+    <p>Les diagnostics affichés ont été produits par l'agent lors de sa dernière évaluation, sur des pannes injectées volontairement. Lancer une nouvelle enquête appelle un LLM payant : c'est désactivé en ligne et se fait en local. <a href="https://github.com/teddyandria/vigie" target="_blank" rel="noopener">Code et explications sur GitHub</a></p>
+  </div>
+
   <div class="kpis" id="kpis" aria-live="polite"></div>
 
   <div class="main">
@@ -128,7 +140,7 @@ section > h2 { font-size: 1.15rem; }
 
 <script>
 const SEUIL = 0.25;
-const etat = { lots: [], selection: null };
+const etat = { lots: [], selection: null, enquetesActives: false };
 const nombre = (v, d = 2) => v == null ? "n/d" : new Intl.NumberFormat("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
 
 function el(tag, attrs = {}, ...enfants) {
@@ -258,8 +270,10 @@ async function selectionner(jour) {
       corps = el("div", { style: "display:grid;gap:1rem" },
         el("p", {}, el("span", { class: "label", text: "Alerte · " }), variables),
         lot.diagnostic ? blocDiagnostic(lot.diagnostic) : el("p", { class: "muted", text: "Aucun diagnostic pour ce lot." }),
-        el("div", { style: "display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center" }, bouton,
-          el("span", { class: "note", text: "Appelle le LLM : environ 0,1 $ par enquête." })),
+        etat.enquetesActives
+          ? el("div", { style: "display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center" }, bouton,
+              el("span", { class: "note", text: "Appelle le LLM : environ 0,1 $ par enquête." }))
+          : el("p", { class: "lecture-seule", text: "Lecture seule : ce diagnostic vient de la dernière évaluation de l'agent. Les nouvelles enquêtes se lancent en local." }),
         erreur,
       );
     }
@@ -299,8 +313,14 @@ function afficherEval(evaluation) {
 }
 
 async function charger(jour) {
-  const [lots, evaluation] = await Promise.all([api("/api/lots"), api("/api/eval").catch(() => null)]);
+  const [lots, evaluation, config] = await Promise.all([
+    api("/api/lots"),
+    api("/api/eval").catch(() => null),
+    api("/api/config").catch(() => ({ enquetes_actives: false })),
+  ]);
   etat.lots = lots;
+  etat.enquetesActives = config.enquetes_actives;
+  document.getElementById("bandeau").hidden = etat.enquetesActives;
   afficherKpis(evaluation);
   afficherEval(evaluation);
   const demande = jour || location.hash.slice(1);
